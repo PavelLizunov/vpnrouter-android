@@ -14,9 +14,6 @@ import io.nekohasekai.libbox.SetupOptions
 import io.nekohasekai.sfa.bg.UpdateProfileWork
 import io.nekohasekai.sfa.constant.Bugs
 import io.nekohasekai.sfa.database.Settings
-import io.nekohasekai.sfa.database.Profile
-import io.nekohasekai.sfa.database.ProfileManager
-import io.nekohasekai.sfa.database.TypedProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -40,7 +37,7 @@ class Application : Application() {
         @Suppress("OPT_IN_USAGE")
         GlobalScope.launch(Dispatchers.IO) {
             initialize()
-            ensureDefaultProfile()
+            ensureDefaults()
             UpdateProfileWork.reconfigureUpdater()
         }
 
@@ -62,35 +59,11 @@ class Application : Application() {
         Libbox.redirectStderr(File(workingDir, "stderr.log").path)
     }
 
-    private suspend fun ensureDefaultProfile() {
+    private suspend fun ensureDefaults() {
         try {
-            val profiles = ProfileManager.list()
-            if (profiles.isNotEmpty()) return
+            if (Settings.perAppProxyList.isNotEmpty()) return
 
-            val configDirectory = File(filesDir, "configs").also { it.mkdirs() }
-            val fileID = ProfileManager.nextFileID()
-            val configFile = File(configDirectory, "$fileID.json")
-
-            // Write embedded default config
-            resources.openRawResource(R.raw.default_config).use { input ->
-                configFile.outputStream().use { output ->
-                    input.copyTo(output)
-                }
-            }
-
-            val typedProfile = TypedProfile().apply {
-                path = configFile.path
-                type = TypedProfile.Type.Local
-            }
-            val profile = Profile(
-                name = "Default",
-                typed = typedProfile,
-                userOrder = 0
-            )
-            val created = ProfileManager.create(profile)
-
-            // Auto-select and enable per-app VPN for common apps
-            Settings.selectedProfile = created.id
+            // Set default per-app VPN list on first run
             Settings.perAppProxyEnabled = true
             Settings.perAppProxyMode = Settings.PER_APP_PROXY_INCLUDE
             Settings.perAppProxyList = setOf(
