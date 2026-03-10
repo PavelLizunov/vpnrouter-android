@@ -29,21 +29,26 @@ object Vendor : VendorInterface {
         return true
     }
 
+    private data class ReleaseInfo(
+        val version: String,
+        val apkUrl: String,
+        val apkName: String,
+        val body: String
+    )
+
     override fun checkUpdate(activity: Activity, byUser: Boolean) {
         @Suppress("OPT_IN_USAGE")
         GlobalScope.launch(Dispatchers.IO) {
             try {
-                val connection = URL(API_URL).openConnection() as HttpURLConnection
-                connection.instanceFollowRedirects = true
-                connection.setRequestProperty("Accept", "application/vnd.github+json")
-                connection.connect()
-                val json = connection.inputStream.bufferedReader().use { it.readText() }
-                connection.disconnect()
-                val release = JSONObject(json)
-                val latestVersion = release.getString("tag_name").removePrefix("v")
-                val currentVersion = BuildConfig.VERSION_NAME
+                val release = try {
+                    fetchReleaseFromApi()
+                } catch (apiError: Exception) {
+                    Log.w(TAG, "API check failed, trying fallback", apiError)
+                    fetchReleaseFromRedirect()
+                }
 
-                if (!isNewerVersion(latestVersion, currentVersion)) {
+                val currentVersion = BuildConfig.VERSION_NAME
+                if (!isNewerVersion(release.version, currentVersion)) {
                     if (byUser) {
                         withContext(Dispatchers.Main) {
                             MaterialAlertDialogBuilder(activity)
@@ -56,33 +61,12 @@ object Vendor : VendorInterface {
                     return@launch
                 }
 
-                // Find arm64 APK asset
-                val assets = release.getJSONArray("assets")
-                var apkUrl: String? = null
-                var apkName: String? = null
-                for (i in 0 until assets.length()) {
-                    val asset = assets.getJSONObject(i)
-                    val name = asset.getString("name")
-                    if (name.endsWith(".apk") && (name.contains("arm64") || name.contains("universal"))) {
-                        apkUrl = asset.getString("browser_download_url")
-                        apkName = name
-                        if (name.contains("arm64")) break // prefer arm64 over universal
-                    }
-                }
-
-                if (apkUrl == null) {
-                    Log.w(TAG, "No suitable APK found in release assets")
-                    return@launch
-                }
-
-                val body = release.optString("body", "").take(500)
-
                 withContext(Dispatchers.Main) {
                     MaterialAlertDialogBuilder(activity)
-                        .setTitle("Update available: v$latestVersion")
-                        .setMessage("Current: v$currentVersion\n\n$body")
+                        .setTitle("Update available: v${release.version}")
+                        .setMessage("Current: v$currentVersion\n\n${release.body}")
                         .setPositiveButton("Download") { _, _ ->
-                            downloadAndInstall(activity, apkUrl, apkName!!)
+                            downloadAndInstall(activity, release.apkUrl, release.apkName)
                         }
                         .setNegativeButton(android.R.string.cancel, null)
                         .show()
@@ -100,6 +84,71 @@ object Vendor : VendorInterface {
                 }
             }
         }
+    }
+
+    private fun fetchReleaseFromApi(): ReleaseInfo {
+        val connection = URL(API_URL).openConnection() as HttpURLConnection
+        connection.instanceFollowRedirects = true
+        connection.setRequestProperty("Accept", "application/vnd.github+json")
+        connection.connectTimeout = 10000
+        connection.readTimeout = 10000
+        connection.connect()
+        val json = connection.inputStream.bufferedReader().use { it.readText() }
+        connection.disconnect()
+
+        val release = JSONObject(json)
+        val version = release.getString("tag_name").removePrefix("v")
+
+        val assets = release.getJSONArray("assets")
+        var apkUrl: String? = null
+        var apkName: String? = null
+        for (i in 0 until assets.length()) {
+            val asset = assets.getJSONObject(i)
+            val name = asset.getString("name")
+            if (name.endsWith(".apk") && (name.contains("arm64") || name.contains("universal"))) {
+                apkUrl = asset.getString("browser_download_url")
+                apkName = name
+                if (name.contains("arm64")) break
+            }
+        }
+
+        if (apkUrl == null) error("No suitable APK found in release assets")
+
+        return ReleaseInfo(
+            version = version,
+            apkUrl = apkUrl,
+            apkName = apkName!!,
+            body = release.optString("body", "").take(500)
+        )
+    }
+
+    private fun fetchReleaseFromRedirect(): ReleaseInfo {
+        val redirectUrl = "https://github.com/$GITHUB_REPO/releases/latest"
+        val connection = URL(redirectUrl).openConnection() as HttpURLConnection
+        connection.instanceFollowRedirects = false
+        connection.connectTimeout = 10000
+        connection.readTimeout = 10000
+        connection.connect()
+
+        val location = connection.getHeaderField("Location")
+        connection.disconnect()
+
+        val version = location?.substringAfterLast("/tag/v")
+            ?: error("No redirect from $redirectUrl")
+
+        if (version.isBlank() || !version[0].isDigit()) {
+            error("Invalid version from redirect: $location")
+        }
+
+        val apkName = "VPNRouter-$version-foss-debug-arm64.apk"
+        val apkUrl = "https://github.com/$GITHUB_REPO/releases/download/v$version/$apkName"
+
+        return ReleaseInfo(
+            version = version,
+            apkUrl = apkUrl,
+            apkName = apkName,
+            body = ""
+        )
     }
 
     @Suppress("DEPRECATION")
