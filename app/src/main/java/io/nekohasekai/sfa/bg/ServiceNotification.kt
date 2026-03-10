@@ -51,7 +51,7 @@ class ServiceNotification(
 
     private val notificationBuilder by lazy {
         NotificationCompat.Builder(service, notificationChannel).setShowWhen(false).setOngoing(true)
-            .setContentTitle("VPNRouter").setOnlyAlertOnce(true)
+            .setContentTitle("Virtual Penguin Network").setOnlyAlertOnce(true)
             .setSmallIcon(R.drawable.ic_menu)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setContentIntent(
@@ -89,7 +89,7 @@ class ServiceNotification(
         }
         service.startForeground(
             notificationId, notificationBuilder
-                .setContentTitle(lastProfileName.takeIf { it.isNotBlank() } ?: "VPNRouter")
+                .setContentTitle(lastProfileName.takeIf { it.isNotBlank() } ?: "Virtual Penguin Network")
                 .setContentText(service.getString(contentTextId)).build()
         )
     }

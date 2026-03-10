@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">VPNRouter</string>
+    <string name="app_name" translatable="false">Virtual Penguin Network</string>
 
     <string name="stop">Stop</string>
     <string name="ok">OK</string>

@@ -90,7 +90,7 @@ class Application : Application() {
                 type = TypedProfile.Type.Local
             }
             val profile = Profile(
-                name = "VPNRouter",
+                name = "Default",
                 typed = typedProfile,
                 userOrder = 0
             )

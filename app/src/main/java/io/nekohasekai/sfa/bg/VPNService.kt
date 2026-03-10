@@ -57,7 +57,7 @@ class VPNService : VpnService(), PlatformInterfaceWrapper {
         if (prepare(this) != null) error("android: missing vpn permission")
 
         val builder = Builder()
-            .setSession("VPNRouter")
+            .setSession("Virtual Penguin Network")
             .setMtu(options.mtu)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
