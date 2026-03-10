@@ -10,7 +10,6 @@ import androidx.core.content.FileProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.nekohasekai.sfa.BuildConfig
 import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.utils.HTTPClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -34,7 +33,12 @@ object Vendor : VendorInterface {
         @Suppress("OPT_IN_USAGE")
         GlobalScope.launch(Dispatchers.IO) {
             try {
-                val json = HTTPClient().use { it.getString(API_URL) }
+                val connection = URL(API_URL).openConnection() as HttpURLConnection
+                connection.instanceFollowRedirects = true
+                connection.setRequestProperty("Accept", "application/vnd.github+json")
+                connection.connect()
+                val json = connection.inputStream.bufferedReader().use { it.readText() }
+                connection.disconnect()
                 val release = JSONObject(json)
                 val latestVersion = release.getString("tag_name").removePrefix("v")
                 val currentVersion = BuildConfig.VERSION_NAME
