@@ -14,6 +14,7 @@ object SettingsKey {
     const val PER_APP_PROXY_UPDATE_ON_CHANGE = "per_app_proxy_update_on_change"
 
     const val SYSTEM_PROXY_ENABLED = "system_proxy_enabled"
+    const val USAGE_STATS_ASKED = "usage_stats_asked"
 
     // cache
 

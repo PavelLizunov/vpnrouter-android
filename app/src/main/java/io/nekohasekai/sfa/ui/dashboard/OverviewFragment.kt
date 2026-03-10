@@ -1,10 +1,14 @@
 package io.nekohasekai.sfa.ui.dashboard
 
 import android.annotation.SuppressLint
+import android.app.AppOpsManager
+import android.app.usage.UsageStatsManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.Process
+import android.provider.Settings as AndroidSettings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.divider.MaterialDividerItemDecoration
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.StatusMessage
@@ -113,6 +118,32 @@ class OverviewFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         loadProtectedApps()
+        promptUsageStatsIfNeeded()
+    }
+
+    private fun hasUsageStatsPermission(): Boolean {
+        val ctx = context ?: return false
+        val appOps = ctx.getSystemService(AppOpsManager::class.java)
+        val mode = appOps.unsafeCheckOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS,
+            Process.myUid(),
+            ctx.packageName
+        )
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    private fun promptUsageStatsIfNeeded() {
+        if (Settings.usageStatsAsked) return
+        if (hasUsageStatsPermission()) return
+        Settings.usageStatsAsked = true
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.usage_stats_title)
+            .setMessage(R.string.usage_stats_message)
+            .setPositiveButton(R.string.allow) { _, _ ->
+                startActivity(Intent(AndroidSettings.ACTION_USAGE_ACCESS_SETTINGS))
+            }
+            .setNegativeButton(R.string.no_thanks, null)
+            .show()
     }
 
     override fun onDestroyView() {
@@ -130,23 +161,39 @@ class OverviewFragment : Fragment() {
 
     private fun loadProtectedApps() {
         val binding = binding ?: return
+        val ctx = context ?: return
         lifecycleScope.launch(Dispatchers.IO) {
-            val pm = requireContext().packageManager
-            val icons = mutableListOf<Drawable>()
+            val pm = ctx.packageManager
             val appList = Settings.perAppProxyList
+            // Collect installed packages
+            val installed = mutableListOf<String>()
             for (packageName in appList) {
                 try {
-                    icons.add(pm.getApplicationIcon(packageName))
+                    pm.getApplicationIcon(packageName)
+                    installed.add(packageName)
                 } catch (_: PackageManager.NameNotFoundException) {
-                    // App not installed, skip
+                    // Not installed, skip
                 }
             }
+            // Sort by usage if permission granted
+            if (hasUsageStatsPermission()) {
+                val usm = ctx.getSystemService(UsageStatsManager::class.java)
+                val end = System.currentTimeMillis()
+                val start = end - 7 * 24 * 60 * 60 * 1000L // 7 days
+                val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_WEEKLY, start, end)
+                val usageMap = mutableMapOf<String, Long>()
+                for (s in stats) {
+                    usageMap[s.packageName] = (usageMap[s.packageName] ?: 0) + s.totalTimeInForeground
+                }
+                installed.sortByDescending { usageMap[it] ?: 0L }
+            }
+            val icons = installed.map { pm.getApplicationIcon(it) }
             withContext(Dispatchers.Main) {
                 binding.protectedAppsTitle.text =
                     getString(R.string.protected_apps_title, icons.size)
                 binding.protectedAppsList.adapter = AppIconAdapter(icons)
                 binding.protectedAppsList.layoutManager =
-                    LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+                    LinearLayoutManager(ctx, LinearLayoutManager.HORIZONTAL, false)
                 binding.protectedAppsCard.isVisible = icons.isNotEmpty()
             }
         }

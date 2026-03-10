@@ -55,6 +55,7 @@ object Settings {
     var perAppProxyUpdateOnChange by dataStore.int(SettingsKey.PER_APP_PROXY_UPDATE_ON_CHANGE) { PER_APP_PROXY_DISABLED }
 
     var systemProxyEnabled by dataStore.boolean(SettingsKey.SYSTEM_PROXY_ENABLED) { true }
+    var usageStatsAsked by dataStore.boolean(SettingsKey.USAGE_STATS_ASKED) { false }
 
     fun serviceClass(): Class<*> {
         return when (serviceMode) {
