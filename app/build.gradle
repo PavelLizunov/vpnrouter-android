@@ -71,10 +71,13 @@ android {
 
     splits {
         abi {
-            enable true
-            universalApk true
-            reset()
-            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            enable false
+        }
+    }
+
+    packagingOptions {
+        jniLibs {
+            excludes += ["lib/armeabi-v7a/**", "lib/x86/**", "lib/x86_64/**"]
         }
     }
 
@@ -94,6 +97,7 @@ android {
             outputFileName = (outputFileName as String).replace("-release", "")
             outputFileName = (outputFileName as String).replace("-play", "")
             outputFileName = (outputFileName as String).replace("-other", "-foss")
+            outputFileName = (outputFileName as String).replace(".apk", "-arm64.apk")
         }
     }
 }

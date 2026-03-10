@@ -64,9 +64,6 @@ class SettingsFragment : Fragment() {
         binding.checkUpdateButton.setOnClickListener {
             Vendor.checkUpdate(activity, byUser = true)
         }
-        binding.openPrivacyPolicyButton.setOnClickListener {
-            activity.launchCustomTab("https://github.com/PavelLizunov/VPNRouter")
-        }
         binding.disableMemoryLimit.addTextChangedListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 val newValue = EnabledType.valueOf(requireContext(), it).boolValue

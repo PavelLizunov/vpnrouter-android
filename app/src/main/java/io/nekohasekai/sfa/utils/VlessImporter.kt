@@ -6,6 +6,8 @@ import io.nekohasekai.sfa.database.Profile
 import io.nekohasekai.sfa.database.ProfileManager
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.database.TypedProfile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -14,7 +16,7 @@ import java.net.URLDecoder
 
 object VlessImporter {
 
-    suspend fun import(context: Context, vlessUri: String): Profile {
+    suspend fun import(context: Context, vlessUri: String): Profile = withContext(Dispatchers.IO) {
         val parsed = parseVlessUri(vlessUri)
         val config = generateConfig(parsed)
         val configJson = config.toString(2)
@@ -37,7 +39,7 @@ object VlessImporter {
         )
         val created = ProfileManager.create(profile)
         Settings.selectedProfile = created.id
-        return created
+        created
     }
 
     private data class VlessParams(

@@ -55,26 +55,15 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <LinearLayout
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/checkUpdateButton"
+                    style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical|end"
-                    android:orientation="horizontal">
-
-                    <Button
-                        android:id="@+id/checkUpdateButton"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/check_update" />
-
-                    <Button
-                        android:id="@+id/openPrivacyPolicyButton"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/privacy_policy" />
-                </LinearLayout>
+                    android:layout_marginTop="12dp"
+                    android:text="@string/check_update"
+                    app:icon="@android:drawable/stat_sys_download"
+                    app:iconGravity="textStart" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
