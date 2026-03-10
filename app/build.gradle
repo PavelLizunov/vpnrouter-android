@@ -31,7 +31,7 @@ android {
         targetSdk 35
         versionCode getVersionProps("VERSION_CODE").toInteger()
         versionName getVersionProps("VERSION_NAME")
-        setProperty("archivesBaseName", "SFA-" + versionName)
+        setProperty("archivesBaseName", "VPNRouter-" + versionName)
     }
 
     signingConfigs {

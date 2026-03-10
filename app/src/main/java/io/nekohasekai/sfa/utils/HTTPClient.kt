@@ -10,11 +10,11 @@ class HTTPClient : Closeable {
 
     companion object {
         val userAgent by lazy {
-            var userAgent = "SFA/"
+            var userAgent = "VPNRouter/"
             userAgent += BuildConfig.VERSION_NAME
             userAgent += " ("
             userAgent += BuildConfig.VERSION_CODE
-            userAgent += "; sing-box "
+            userAgent += "; sing-box-core "
             userAgent += Libbox.version()
             userAgent += "; language "
             userAgent += Locale.getDefault().toLanguageTag().replace("-", "_")

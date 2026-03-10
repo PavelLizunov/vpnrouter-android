@@ -51,7 +51,7 @@ class ServiceNotification(
 
     private val notificationBuilder by lazy {
         NotificationCompat.Builder(service, notificationChannel).setShowWhen(false).setOngoing(true)
-            .setContentTitle("sing-box").setOnlyAlertOnce(true)
+            .setContentTitle("VPNRouter").setOnlyAlertOnce(true)
             .setSmallIcon(R.drawable.ic_menu)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setContentIntent(
@@ -89,7 +89,7 @@ class ServiceNotification(
         }
         service.startForeground(
             notificationId, notificationBuilder
-                .setContentTitle(lastProfileName.takeIf { it.isNotBlank() } ?: "sing-box")
+                .setContentTitle(lastProfileName.takeIf { it.isNotBlank() } ?: "VPNRouter")
                 .setContentText(service.getString(contentTextId)).build()
         )
     }

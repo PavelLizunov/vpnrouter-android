@@ -227,7 +227,7 @@ class VPNScanActivity : AbstractActivity<ActivityVpnScanBinding>() {
                     }
                     for (sfaClass in sfaClasses) {
                         if (clazzName.contains(sfaClass)) {
-                            return "sing-box"
+                            return "VPNRouter"
                         }
                     }
                     for (legacySagerNetClass in legacySagerNetClasses) {

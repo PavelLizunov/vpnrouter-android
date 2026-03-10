@@ -77,7 +77,7 @@ class SettingsFragment : Fragment() {
             Vendor.checkUpdate(activity, true)
         }
         binding.openPrivacyPolicyButton.setOnClickListener {
-            activity.launchCustomTab("https://sing-box.sagernet.org/clients/privacy/")
+            activity.launchCustomTab("https://github.com/PavelLizunov/VPNRouter")
         }
         binding.disableMemoryLimit.addTextChangedListener {
             lifecycleScope.launch(Dispatchers.IO) {
@@ -113,7 +113,7 @@ class SettingsFragment : Fragment() {
             startActivity(Intent(requireContext(), DebugActivity::class.java))
         }
         binding.startSponserButton.setOnClickListener {
-            activity.launchCustomTab("https://sekai.icu/sponsors/")
+            activity.launchCustomTab("https://github.com/PavelLizunov/VPNRouter")
         }
         lifecycleScope.launch(Dispatchers.IO) {
             reloadSettings()
