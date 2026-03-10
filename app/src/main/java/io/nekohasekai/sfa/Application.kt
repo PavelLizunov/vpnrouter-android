@@ -4,8 +4,6 @@ import android.app.Application
 import android.app.NotificationManager
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
 import android.os.PowerManager
@@ -13,7 +11,6 @@ import androidx.core.content.getSystemService
 import go.Seq
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.SetupOptions
-import io.nekohasekai.sfa.bg.AppChangeReceiver
 import io.nekohasekai.sfa.bg.UpdateProfileWork
 import io.nekohasekai.sfa.constant.Bugs
 import io.nekohasekai.sfa.database.Settings
@@ -46,11 +43,6 @@ class Application : Application() {
             ensureDefaultProfile()
             UpdateProfileWork.reconfigureUpdater()
         }
-
-        registerReceiver(AppChangeReceiver(), IntentFilter().apply {
-            addAction(Intent.ACTION_PACKAGE_ADDED)
-            addDataScheme("package")
-        })
 
     }
 

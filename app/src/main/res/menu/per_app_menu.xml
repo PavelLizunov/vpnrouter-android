@@ -88,12 +88,5 @@
         </menu>
     </item>
 
-    <item android:title="@string/per_app_proxy_scan">
-        <menu>
-            <item
-                android:id="@+id/action_scan_china_apps"
-                android:title="@string/per_app_proxy_scan_china_apps" />
-        </menu>
-    </item>
 
 </menu>

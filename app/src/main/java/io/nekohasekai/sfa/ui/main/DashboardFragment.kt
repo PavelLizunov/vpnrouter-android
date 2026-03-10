@@ -50,7 +50,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             when (it) {
                 Status.Stopped -> {
                     disablePager()
-                    binding.fab.setImageResource(R.drawable.ic_play_arrow_24)
+                    binding.fab.setIconResource(R.drawable.ic_play_arrow_24)
+                    binding.fab.text = getString(R.string.action_start)
                     binding.fab.show()
                     binding.fab.isEnabled = true
                 }
@@ -62,7 +63,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 Status.Started -> {
                     checkDeprecatedNotes()
                     enablePager()
-                    binding.fab.setImageResource(R.drawable.ic_stop_24)
+                    binding.fab.setIconResource(R.drawable.ic_stop_24)
+                    binding.fab.text = getString(R.string.stop)
                     binding.fab.show()
                     binding.fab.isEnabled = true
                 }

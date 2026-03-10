@@ -7,7 +7,6 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
@@ -22,25 +21,16 @@ import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import io.nekohasekai.sfa.Application
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.databinding.ActivityPerAppProxyBinding
-import io.nekohasekai.sfa.databinding.DialogProgressbarBinding
 import io.nekohasekai.sfa.databinding.ViewAppListItemBinding
 import io.nekohasekai.sfa.ktx.clipboardText
 import io.nekohasekai.sfa.ui.shared.AbstractActivity
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.zip.ZipFile
 
 class PerAppProxyActivity : AbstractActivity<ActivityPerAppProxyBinding>() {
     enum class SortMode {
@@ -515,89 +505,9 @@ class PerAppProxyActivity : AbstractActivity<ActivityPerAppProxyBinding>() {
 
             }
 
-            R.id.action_scan_china_apps -> {
-                scanChinaApps()
-            }
-
             else -> return super.onOptionsItemSelected(item)
         }
         return true
-    }
-
-    @SuppressLint("NotifyDataSetChanged")
-    private fun scanChinaApps() {
-        val binding = DialogProgressbarBinding.inflate(layoutInflater)
-        binding.progress.max = currentPackages.size
-        binding.message.setText(R.string.message_scanning)
-        val dialogTheme =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && resources.configuration.isNightModeActive) {
-                com.google.android.material.R.style.Theme_MaterialComponents_Dialog
-            } else {
-                com.google.android.material.R.style.Theme_MaterialComponents_Light_Dialog
-            }
-        val progress = MaterialAlertDialogBuilder(
-            this, dialogTheme
-        ).setView(binding.root).setCancelable(false).create()
-        progress.show()
-        lifecycleScope.launch {
-            val startTime = System.currentTimeMillis()
-            val foundApps = withContext(Dispatchers.Default) {
-                mutableMapOf<String, PackageCache>().also { foundApps ->
-                    val progressInt = AtomicInteger()
-                    currentPackages.map { it ->
-                        async {
-                            if (scanChinaPackage(it.packageName)) {
-                                foundApps[it.packageName] = it
-                            }
-                            runOnUiThread {
-                                binding.progress.progress = progressInt.addAndGet(1)
-                            }
-                        }
-                    }.awaitAll()
-                }
-            }
-            Log.d(
-                "PerAppProxyActivity",
-                "Scan China apps took ${(System.currentTimeMillis() - startTime).toDouble() / 1000}s"
-            )
-            withContext(Dispatchers.Main) {
-                progress.dismiss()
-                if (foundApps.isEmpty()) {
-                    MaterialAlertDialogBuilder(this@PerAppProxyActivity).setTitle(R.string.title_scan_result)
-                        .setMessage(R.string.message_scan_app_no_apps_found)
-                        .setPositiveButton(R.string.ok, null).show()
-                    return@withContext
-                }
-                val dialogContent =
-                    getString(R.string.message_scan_app_found) + "\n\n" + foundApps.entries.joinToString(
-                        "\n"
-                    ) {
-                        "${it.value.applicationLabel} (${it.key})"
-                    }
-                MaterialAlertDialogBuilder(this@PerAppProxyActivity).setTitle(R.string.title_scan_result)
-                    .setMessage(dialogContent)
-                    .setPositiveButton(R.string.action_select) { dialog, _ ->
-                        dialog.dismiss()
-                        lifecycleScope.launch {
-                            val selectedUIDs = selectedUIDs.toMutableSet()
-                            foundApps.values.forEach {
-                                selectedUIDs.add(it.uid)
-                            }
-                            postSaveSelectedApplications(selectedUIDs)
-                        }
-                    }.setNegativeButton(R.string.action_deselect) { dialog, _ ->
-                        dialog.dismiss()
-                        lifecycleScope.launch {
-                            val selectedUIDs = selectedUIDs.toMutableSet()
-                            foundApps.values.forEach {
-                                selectedUIDs.remove(it.uid)
-                            }
-                            postSaveSelectedApplications(selectedUIDs)
-                        }
-                    }.setNeutralButton(android.R.string.cancel, null).show()
-            }
-        }
-
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -622,157 +532,5 @@ class PerAppProxyActivity : AbstractActivity<ActivityPerAppProxyBinding>() {
         }
     }
 
-    companion object {
-
-        private val skipPrefixList = listOf(
-            "com.google",
-            "com.android.chrome",
-            "com.android.vending",
-            "com.microsoft",
-            "com.apple",
-            "com.zhiliaoapp.musically", // Banned by China
-            "com.android.providers.downloads",
-        )
-
-        private val chinaAppPrefixList = listOf(
-            "com.tencent",
-            "com.alibaba",
-            "com.umeng",
-            "com.qihoo",
-            "com.ali",
-            "com.alipay",
-            "com.amap",
-            "com.sina",
-            "com.weibo",
-            "com.vivo",
-            "com.xiaomi",
-            "com.huawei",
-            "com.taobao",
-            "com.secneo",
-            "s.h.e.l.l",
-            "com.stub",
-            "com.kiwisec",
-            "com.secshell",
-            "com.wrapper",
-            "cn.securitystack",
-            "com.mogosec",
-            "com.secoen",
-            "com.netease",
-            "com.mx",
-            "com.qq.e",
-            "com.baidu",
-            "com.bytedance",
-            "com.bugly",
-            "com.miui",
-            "com.oppo",
-            "com.coloros",
-            "com.iqoo",
-            "com.meizu",
-            "com.gionee",
-            "cn.nubia",
-            "com.oplus",
-            "andes.oplus",
-            "com.unionpay",
-            "cn.wps"
-        )
-
-
-        private val chinaAppRegex by lazy {
-            ("(" + chinaAppPrefixList.joinToString("|").replace(".", "\\.") + ").*").toRegex()
-        }
-
-        fun scanChinaPackage(packageName: String): Boolean {
-            skipPrefixList.forEach {
-                if (packageName == it || packageName.startsWith("$it.")) return false
-            }
-
-            val packageManagerFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                PackageManager.MATCH_UNINSTALLED_PACKAGES or PackageManager.GET_ACTIVITIES or PackageManager.GET_SERVICES or PackageManager.GET_RECEIVERS or PackageManager.GET_PROVIDERS
-            } else {
-                @Suppress("DEPRECATION")
-                PackageManager.GET_UNINSTALLED_PACKAGES or PackageManager.GET_ACTIVITIES or PackageManager.GET_SERVICES or PackageManager.GET_RECEIVERS or PackageManager.GET_PROVIDERS
-            }
-            if (packageName.matches(chinaAppRegex)) {
-                Log.d("PerAppProxyActivity", "Match package name: $packageName")
-                return true
-            }
-            try {
-                val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    Application.packageManager.getPackageInfo(
-                        packageName,
-                        PackageManager.PackageInfoFlags.of(packageManagerFlags.toLong())
-                    )
-                } else {
-                    @Suppress("DEPRECATION") Application.packageManager.getPackageInfo(
-                        packageName, packageManagerFlags
-                    )
-                }
-                val appInfo = packageInfo.applicationInfo ?: return false
-                packageInfo.services?.forEach {
-                    if (it.name.matches(chinaAppRegex)) {
-                        Log.d("PerAppProxyActivity", "Match service ${it.name} in $packageName")
-                        return true
-                    }
-                }
-                packageInfo.activities?.forEach {
-                    if (it.name.matches(chinaAppRegex)) {
-                        Log.d("PerAppProxyActivity", "Match activity ${it.name} in $packageName")
-                        return true
-                    }
-                }
-                packageInfo.receivers?.forEach {
-                    if (it.name.matches(chinaAppRegex)) {
-                        Log.d("PerAppProxyActivity", "Match receiver ${it.name} in $packageName")
-                        return true
-                    }
-                }
-                packageInfo.providers?.forEach {
-                    if (it.name.matches(chinaAppRegex)) {
-                        Log.d("PerAppProxyActivity", "Match provider ${it.name} in $packageName")
-                        return true
-                    }
-                }
-                ZipFile(File(appInfo.publicSourceDir)).use {
-                    for (packageEntry in it.entries()) {
-                        if (packageEntry.name.startsWith("firebase-")) return false
-                    }
-                    for (packageEntry in it.entries()) {
-                        if (!(packageEntry.name.startsWith("classes") && packageEntry.name.endsWith(
-                                ".dex"
-                            ))
-                        ) {
-                            continue
-                        }
-                        if (packageEntry.size > 15000000) {
-                            Log.d(
-                                "PerAppProxyActivity",
-                                "Confirm $packageName due to large dex file"
-                            )
-                            return true
-                        }
-                        val input = it.getInputStream(packageEntry).buffered()
-                        val dexFile = try {
-                            DexBackedDexFile.fromInputStream(null, input)
-                        } catch (e: Exception) {
-                            Log.e("PerAppProxyActivity", "Error reading dex file", e)
-                            return false
-                        }
-                        for (clazz in dexFile.classes) {
-                            val clazzName =
-                                clazz.type.substring(1, clazz.type.length - 1).replace("/", ".")
-                                    .replace("$", ".")
-                            if (clazzName.matches(chinaAppRegex)) {
-                                Log.d("PerAppProxyActivity", "Match $clazzName in $packageName")
-                                return true
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("PerAppProxyActivity", "Error scanning package $packageName", e)
-            }
-            return false
-        }
-    }
 
 }

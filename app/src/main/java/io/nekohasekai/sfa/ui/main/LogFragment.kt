@@ -47,7 +47,8 @@ class LogFragment : Fragment(), CommandClient.Handler {
         activity.serviceStatus.observe(viewLifecycleOwner) {
             when (it) {
                 Status.Stopped -> {
-                    binding.fab.setImageResource(R.drawable.ic_play_arrow_24)
+                    binding.fab.setIconResource(R.drawable.ic_play_arrow_24)
+                    binding.fab.text = getString(R.string.action_start)
                     binding.fab.show()
                     binding.statusText.setText(R.string.status_default)
                 }
@@ -59,7 +60,8 @@ class LogFragment : Fragment(), CommandClient.Handler {
 
                 Status.Started -> {
                     commandClient.connect()
-                    binding.fab.setImageResource(R.drawable.ic_stop_24)
+                    binding.fab.setIconResource(R.drawable.ic_stop_24)
+                    binding.fab.text = getString(R.string.stop)
                     binding.fab.show()
                     binding.fab.isEnabled = true
                     binding.statusText.setText(R.string.status_started)

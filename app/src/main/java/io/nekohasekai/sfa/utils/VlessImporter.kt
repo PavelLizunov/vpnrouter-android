@@ -94,7 +94,7 @@ object VlessImporter {
         val config = JSONObject()
 
         // Log
-        config.put("log", JSONObject().put("level", "info"))
+        config.put("log", JSONObject().put("level", "warn"))
 
         // DNS
         config.put("dns", JSONObject().apply {

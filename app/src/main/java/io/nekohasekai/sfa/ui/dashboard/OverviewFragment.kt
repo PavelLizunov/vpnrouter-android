@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.divider.MaterialDividerItemDecoration
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.StatusMessage
+import io.nekohasekai.sfa.BuildConfig
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.bg.BoxService
 import io.nekohasekai.sfa.constant.Status
@@ -83,6 +84,7 @@ class OverviewFragment : Fragment() {
         binding.checkUpdateButton.setOnClickListener {
             Vendor.checkUpdate(activity, byUser = true)
         }
+        binding.versionText.text = "v${BuildConfig.VERSION_NAME}"
 
         activity.serviceStatus.observe(viewLifecycleOwner) {
             binding.statusContainer.isVisible = it == Status.Starting || it == Status.Started
@@ -106,6 +108,11 @@ class OverviewFragment : Fragment() {
         }
 
         ProfileManager.registerCallback(this::updateProfiles)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadProtectedApps()
     }
 
     override fun onDestroyView() {
