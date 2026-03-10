@@ -1,10 +1,14 @@
 package io.nekohasekai.sfa.ui.dashboard
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -26,6 +30,7 @@ import io.nekohasekai.sfa.databinding.ViewProfileItemBinding
 import io.nekohasekai.sfa.ktx.errorDialogBuilder
 import io.nekohasekai.sfa.ktx.getAttrColor
 import io.nekohasekai.sfa.ui.MainActivity
+import io.nekohasekai.sfa.ui.profileoverride.PerAppProxyActivity
 import io.nekohasekai.sfa.utils.CommandClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -65,8 +70,19 @@ class OverviewFragment : Fragment() {
         val divider = MaterialDividerItemDecoration(requireContext(), LinearLayoutManager.VERTICAL)
         divider.isLastItemDecorated = false
         binding.profileList.addItemDecoration(divider)
+        // Getting Started card — navigate to PerAppProxyActivity
+        binding.manageAppsButton.setOnClickListener {
+            startActivity(Intent(requireContext(), PerAppProxyActivity::class.java))
+        }
+        // Protected Apps card — navigate to PerAppProxyActivity
+        binding.protectedAppsManageButton.setOnClickListener {
+            startActivity(Intent(requireContext(), PerAppProxyActivity::class.java))
+        }
+        loadProtectedApps()
+
         activity.serviceStatus.observe(viewLifecycleOwner) {
             binding.statusContainer.isVisible = it == Status.Starting || it == Status.Started
+            binding.gettingStartedCard.isVisible = it == Status.Stopped
             when (it) {
                 Status.Stopped -> {
                     binding.clashModeCard.isVisible = false
@@ -99,6 +115,53 @@ class OverviewFragment : Fragment() {
 
     private fun updateProfiles() {
         adapter?.reload()
+    }
+
+    private fun loadProtectedApps() {
+        val binding = binding ?: return
+        lifecycleScope.launch(Dispatchers.IO) {
+            val pm = requireContext().packageManager
+            val icons = mutableListOf<Drawable>()
+            val appList = Settings.perAppProxyList
+            for (packageName in appList) {
+                try {
+                    icons.add(pm.getApplicationIcon(packageName))
+                } catch (_: PackageManager.NameNotFoundException) {
+                    // App not installed, skip
+                }
+            }
+            withContext(Dispatchers.Main) {
+                binding.protectedAppsTitle.text =
+                    getString(R.string.protected_apps_title, icons.size)
+                binding.protectedAppsList.adapter = AppIconAdapter(icons)
+                binding.protectedAppsList.layoutManager =
+                    LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+                binding.protectedAppsCard.isVisible = icons.isNotEmpty()
+            }
+        }
+    }
+
+    private class AppIconAdapter(private val icons: List<Drawable>) :
+        RecyclerView.Adapter<AppIconAdapter.ViewHolder>() {
+
+        class ViewHolder(val imageView: ImageView) : RecyclerView.ViewHolder(imageView)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val size = (40 * parent.context.resources.displayMetrics.density).toInt()
+            val margin = (4 * parent.context.resources.displayMetrics.density).toInt()
+            val imageView = ImageView(parent.context).apply {
+                layoutParams = RecyclerView.LayoutParams(size, size).apply {
+                    setMargins(margin, 0, margin, 0)
+                }
+            }
+            return ViewHolder(imageView)
+        }
+
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            holder.imageView.setImageDrawable(icons[position])
+        }
+
+        override fun getItemCount() = icons.size
     }
 
     private fun reloadSystemProxyStatus() {

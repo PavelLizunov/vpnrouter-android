@@ -190,4 +190,9 @@
     <string name="open_settings">Open Settings</string>
     <string name="notification_permission_title">Notification permission</string>
     <string name="notification_permission_required_description">VPNRouter is unable to show real-time network speeds without the permission to send notifications. Please grant the permission or disable real-time network speeds notification before starting the service.</string>
+
+    <string name="getting_started_title">Getting Started</string>
+    <string name="getting_started_message">Press the play button to connect. VPN routes selected apps through a secure tunnel.</string>
+    <string name="manage_apps">Manage Apps</string>
+    <string name="protected_apps_title">Protected Apps (%d)</string>
 </resources>

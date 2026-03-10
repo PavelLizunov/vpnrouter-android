@@ -24,6 +24,7 @@ import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.databinding.ActivityQrScanBinding
 import io.nekohasekai.sfa.ktx.errorDialogBuilder
 import io.nekohasekai.sfa.ui.shared.AbstractActivity
+import io.nekohasekai.sfa.utils.VlessImporter
 import io.nekohasekai.sfa.vendor.Vendor
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutorService
@@ -137,6 +138,19 @@ class QRScanActivity : AbstractActivity<ActivityQrScanBinding>() {
     }
 
     private fun onSuccess(value: String): Boolean {
+        if (value.startsWith("vless://")) {
+            lifecycleScope.launch {
+                try {
+                    VlessImporter.import(this@QRScanActivity, value)
+                    setResult(RESULT_OK)
+                    finish()
+                } catch (e: Exception) {
+                    errorDialogBuilder(e).show()
+                    imageAnalysis.setAnalyzer(analysisExecutor, imageAnalyzer)
+                }
+            }
+            return true
+        }
         try {
             importRemoteProfileFromString(value)
             return true

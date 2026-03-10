@@ -108,13 +108,37 @@ class Application : Application() {
                 "com.brave.browser",
                 "com.opera.browser",
                 "com.microsoft.emmx",
-                // YouTube
+                // Social media
+                "com.instagram.android",
+                "com.facebook.katana",
+                "com.facebook.lite",
+                "com.twitter.android",
+                "com.zhiliaoapp.musically",
+                "com.linkedin.android",
+                "com.reddit.frontpage",
+                "com.pinterest",
+                "com.snapchat.android",
+                "com.threads.android",
+                // Messengers
+                "org.telegram.messenger",
+                "com.whatsapp",
+                "com.whatsapp.w4b",
+                "org.thoughtcrime.securesms",
+                "com.discord",
+                "com.viber.voip",
+                // Video & Streaming
                 "com.google.android.youtube",
-                // Play Market
-                "com.android.vending",
+                "com.spotify.music",
+                "com.netflix.mediaclient",
+                "tv.twitch.android.app",
                 // AI assistants
                 "com.anthropic.claude",
                 "com.openai.chatgpt",
+                "com.google.android.apps.bard",
+                "com.microsoft.copilot",
+                // Play Store + Google Play Services (auth, push, updates)
+                "com.android.vending",
+                "com.google.android.gms",
             )
         } catch (e: Exception) {
             // Silently ignore — user can create profile manually
