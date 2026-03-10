@@ -162,25 +162,21 @@ class PerAppProxyActivity : AbstractActivity<ActivityPerAppProxyBinding>() {
             if (hideDisabledApps && packageCache.isDisabled) continue
             displayPackages.add(packageCache)
         }
-        displayPackages.sortWith(compareBy<PackageCache> {
-            !selectedUIDs.contains(it.uid)
-        }.let {
-            if (!sortReverse) it.thenBy {
-                when (sortMode) {
-                    SortMode.NAME -> it.applicationLabel
-                    SortMode.PACKAGE_NAME -> it.packageName
-                    SortMode.UID -> it.uid
-                    SortMode.INSTALL_TIME -> it.installTime
-                    SortMode.UPDATE_TIME -> it.updateTime
-                }
-            } else it.thenByDescending {
-                when (sortMode) {
-                    SortMode.NAME -> it.applicationLabel
-                    SortMode.PACKAGE_NAME -> it.packageName
-                    SortMode.UID -> it.uid
-                    SortMode.INSTALL_TIME -> it.installTime
-                    SortMode.UPDATE_TIME -> it.updateTime
-                }
+        displayPackages.sortWith(if (!sortReverse) compareBy {
+            when (sortMode) {
+                SortMode.NAME -> it.applicationLabel
+                SortMode.PACKAGE_NAME -> it.packageName
+                SortMode.UID -> it.uid
+                SortMode.INSTALL_TIME -> it.installTime
+                SortMode.UPDATE_TIME -> it.updateTime
+            }
+        } else compareByDescending {
+            when (sortMode) {
+                SortMode.NAME -> it.applicationLabel
+                SortMode.PACKAGE_NAME -> it.packageName
+                SortMode.UID -> it.uid
+                SortMode.INSTALL_TIME -> it.installTime
+                SortMode.UPDATE_TIME -> it.updateTime
             }
         })
 
