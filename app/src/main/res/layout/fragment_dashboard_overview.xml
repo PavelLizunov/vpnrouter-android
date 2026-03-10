@@ -603,6 +603,16 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/checkUpdateButton"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/check_update"
+                app:icon="@android:drawable/stat_sys_download"
+                app:iconGravity="textStart"
+                xmlns:app="http://schemas.android.com/apk/res-auto" />
 
         </LinearLayout>
 

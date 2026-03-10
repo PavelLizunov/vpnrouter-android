@@ -32,6 +32,7 @@ import io.nekohasekai.sfa.ktx.getAttrColor
 import io.nekohasekai.sfa.ui.MainActivity
 import io.nekohasekai.sfa.ui.profileoverride.PerAppProxyActivity
 import io.nekohasekai.sfa.utils.CommandClient
+import io.nekohasekai.sfa.vendor.Vendor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -79,6 +80,9 @@ class OverviewFragment : Fragment() {
             startActivity(Intent(requireContext(), PerAppProxyActivity::class.java))
         }
         loadProtectedApps()
+        binding.checkUpdateButton.setOnClickListener {
+            Vendor.checkUpdate(activity, byUser = true)
+        }
 
         activity.serviceStatus.observe(viewLifecycleOwner) {
             binding.statusContainer.isVisible = it == Status.Starting || it == Status.Started
