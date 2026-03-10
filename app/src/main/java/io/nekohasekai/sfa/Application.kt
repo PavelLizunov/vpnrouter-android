@@ -16,6 +16,7 @@ import io.nekohasekai.libbox.SetupOptions
 import io.nekohasekai.sfa.bg.AppChangeReceiver
 import io.nekohasekai.sfa.bg.UpdateProfileWork
 import io.nekohasekai.sfa.constant.Bugs
+import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.database.Profile
 import io.nekohasekai.sfa.database.ProfileManager
 import io.nekohasekai.sfa.database.TypedProfile
@@ -94,7 +95,27 @@ class Application : Application() {
                 typed = typedProfile,
                 userOrder = 0
             )
-            ProfileManager.create(profile)
+            val created = ProfileManager.create(profile)
+
+            // Auto-select and enable per-app VPN for common apps
+            Settings.selectedProfile = created.id
+            Settings.perAppProxyEnabled = true
+            Settings.perAppProxyMode = Settings.PER_APP_PROXY_INCLUDE
+            Settings.perAppProxyList = setOf(
+                // Browsers
+                "com.android.chrome",
+                "org.mozilla.firefox",
+                "com.brave.browser",
+                "com.opera.browser",
+                "com.microsoft.emmx",
+                // YouTube
+                "com.google.android.youtube",
+                // Play Market
+                "com.android.vending",
+                // AI assistants
+                "com.anthropic.claude",
+                "com.openai.chatgpt",
+            )
         } catch (e: Exception) {
             // Silently ignore — user can create profile manually
         }

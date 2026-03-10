@@ -149,7 +149,7 @@ class QRScanActivity : AbstractActivity<ActivityQrScanBinding>() {
 
     private fun importRemoteProfileFromString(uriString: String) {
         val uri = Uri.parse(uriString)
-        if (uri.scheme != "vpnrouter" || uri.host != "import-remote-profile") error("Not a valid VPNRouter remote profile URI")
+        if (uri.scheme !in listOf("vpnrouter", "sing-box") || uri.host != "import-remote-profile") error("Not a valid remote profile URI")
         Libbox.parseRemoteProfileImportLink(uri.toString())
         setResult(RESULT_OK, Intent().apply {
             setData(uri)

@@ -115,7 +115,7 @@ class MainActivity : AbstractActivity<ActivityMainBinding>(),
                 return
             }
         }
-        if (uri.scheme == "vpnrouter" && uri.host == "import-remote-profile") {
+        if (uri.scheme in listOf("vpnrouter", "sing-box") && uri.host == "import-remote-profile") {
             val profile = try {
                 Libbox.parseRemoteProfileImportLink(uri.toString())
             } catch (e: Exception) {

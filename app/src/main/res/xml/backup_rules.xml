@@ -7,7 +7,7 @@
     <include
         domain="database"
         path="settings.db" />
-    <include
+    <exclude
         domain="file"
         path="configs" />
 

@@ -70,6 +70,9 @@
                 <data
                     android:host="import-remote-profile"
                     android:scheme="vpnrouter" />
+                <data
+                    android:host="import-remote-profile"
+                    android:scheme="sing-box" />
 
             </intent-filter>
 
@@ -173,8 +176,8 @@
 
         <receiver
             android:name=".bg.BootReceiver"
-            android:exported="true">
-            <intent-filter android:priority="999">
+            android:exported="false">
+            <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
