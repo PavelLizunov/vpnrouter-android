@@ -74,9 +74,10 @@ class QRScanActivity : AbstractActivity<ActivityQrScanBinding>() {
         }
     }
     private val onFailure: (Exception) -> Unit = {
-        lifecycleScope.launch {
-            resetAnalyzer()
-            errorDialogBuilder("MLKit error: ${it.localizedMessage}").show()
+        if (useVendorAnalyzer) {
+            lifecycleScope.launch {
+                resetAnalyzer()
+            }
         }
     }
     private val vendorAnalyzer = Vendor.createQRCodeAnalyzer(onSuccess, onFailure)
