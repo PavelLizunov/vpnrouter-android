@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.view.isGone
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import io.nekohasekai.libbox.Libbox
@@ -25,9 +24,7 @@ import io.nekohasekai.sfa.ktx.launchCustomTab
 import io.nekohasekai.sfa.ktx.setSimpleItems
 import io.nekohasekai.sfa.ktx.text
 import io.nekohasekai.sfa.ui.MainActivity
-import io.nekohasekai.sfa.ui.debug.DebugActivity
 import io.nekohasekai.sfa.ui.profileoverride.ProfileOverrideActivity
-import io.nekohasekai.sfa.vendor.Vendor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,19 +60,6 @@ class SettingsFragment : Fragment() {
                 reloadSettings()
             }
         }
-        if (!Vendor.checkUpdateAvailable()) {
-            binding.checkUpdateEnabled.isVisible = false
-            binding.checkUpdateButton.isVisible = false
-        }
-        binding.checkUpdateEnabled.addTextChangedListener {
-            lifecycleScope.launch(Dispatchers.IO) {
-                val newValue = EnabledType.valueOf(requireContext(), it).boolValue
-                Settings.checkUpdateEnabled = newValue
-            }
-        }
-        binding.checkUpdateButton.setOnClickListener {
-            Vendor.checkUpdate(activity, true)
-        }
         binding.openPrivacyPolicyButton.setOnClickListener {
             activity.launchCustomTab("https://github.com/PavelLizunov/VPNRouter")
         }
@@ -109,12 +93,6 @@ class SettingsFragment : Fragment() {
         binding.configureOverridesButton.setOnClickListener {
             startActivity(Intent(requireContext(), ProfileOverrideActivity::class.java))
         }
-        binding.openDebugButton.setOnClickListener {
-            startActivity(Intent(requireContext(), DebugActivity::class.java))
-        }
-        binding.startSponserButton.setOnClickListener {
-            activity.launchCustomTab("https://github.com/PavelLizunov/VPNRouter")
-        }
         lifecycleScope.launch(Dispatchers.IO) {
             reloadSettings()
         }
@@ -127,7 +105,6 @@ class SettingsFragment : Fragment() {
             (activity.getExternalFilesDir(null) ?: activity.filesDir)
                 .walkTopDown().filter { it.isFile }.map { it.length() }.sum()
         )
-        val checkUpdateEnabled = Settings.checkUpdateEnabled
         val removeBackgroundPermissionPage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Application.powerManager.isIgnoringBatteryOptimizations(Application.application.packageName)
         } else {
@@ -136,9 +113,6 @@ class SettingsFragment : Fragment() {
         val dynamicNotification = Settings.dynamicNotification
         withContext(Dispatchers.Main) {
             binding.dataSizeText.text = dataSize
-            binding.checkUpdateEnabled.text =
-                EnabledType.from(checkUpdateEnabled).getString(requireContext())
-            binding.checkUpdateEnabled.setSimpleItems(R.array.enabled)
             binding.disableMemoryLimit.text =
                 EnabledType.from(!Settings.disableMemoryLimit).getString(requireContext())
             binding.disableMemoryLimit.setSimpleItems(R.array.enabled)

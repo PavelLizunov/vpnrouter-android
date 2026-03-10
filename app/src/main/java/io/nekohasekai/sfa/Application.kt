@@ -16,6 +16,9 @@ import io.nekohasekai.libbox.SetupOptions
 import io.nekohasekai.sfa.bg.AppChangeReceiver
 import io.nekohasekai.sfa.bg.UpdateProfileWork
 import io.nekohasekai.sfa.constant.Bugs
+import io.nekohasekai.sfa.database.Profile
+import io.nekohasekai.sfa.database.ProfileManager
+import io.nekohasekai.sfa.database.TypedProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -39,6 +42,7 @@ class Application : Application() {
         @Suppress("OPT_IN_USAGE")
         GlobalScope.launch(Dispatchers.IO) {
             initialize()
+            ensureDefaultProfile()
             UpdateProfileWork.reconfigureUpdater()
         }
 
@@ -63,6 +67,37 @@ class Application : Application() {
             it.fixAndroidStack = Bugs.fixAndroidStack
         })
         Libbox.redirectStderr(File(workingDir, "stderr.log").path)
+    }
+
+    private suspend fun ensureDefaultProfile() {
+        try {
+            val profiles = ProfileManager.list()
+            if (profiles.isNotEmpty()) return
+
+            val configDirectory = File(filesDir, "configs").also { it.mkdirs() }
+            val fileID = ProfileManager.nextFileID()
+            val configFile = File(configDirectory, "$fileID.json")
+
+            // Write embedded default config
+            resources.openRawResource(R.raw.default_config).use { input ->
+                configFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            val typedProfile = TypedProfile().apply {
+                path = configFile.path
+                type = TypedProfile.Type.Local
+            }
+            val profile = Profile(
+                name = "VPNRouter",
+                typed = typedProfile,
+                userOrder = 0
+            )
+            ProfileManager.create(profile)
+        } catch (e: Exception) {
+            // Silently ignore — user can create profile manually
+        }
     }
 
     companion object {

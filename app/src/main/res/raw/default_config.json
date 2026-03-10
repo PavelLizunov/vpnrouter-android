@@ -1,0 +1,75 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "dns": {
+    "servers": [
+      {
+        "type": "tls",
+        "tag": "remote",
+        "server": "8.8.8.8",
+        "server_port": 853
+      },
+      {
+        "type": "local",
+        "tag": "local"
+      }
+    ],
+    "final": "remote"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": [
+        "172.19.0.1/30",
+        "fdfe:dcba:9876::1/126"
+      ],
+      "auto_route": true,
+      "strict_route": true,
+      "sniff": true
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "vless",
+      "tag": "proxy",
+      "server": "195.135.255.216",
+      "server_port": 443,
+      "uuid": "25c43ab4-e746-40dd-aab5-e48039e5d641",
+      "flow": "xtls-rprx-vision",
+      "tls": {
+        "enabled": true,
+        "server_name": "yahoo.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "firefox"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "DnT9hIvt5QEx07unHUeXbWxN4Qo1gnecN4p0s62nckU",
+          "short_id": "78ca7952"
+        }
+      }
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "protocol": "dns",
+        "action": "hijack-dns"
+      },
+      {
+        "ip_is_private": true,
+        "action": "route",
+        "outbound": "direct"
+      }
+    ],
+    "auto_detect_interface": true,
+    "default_domain_resolver": "local"
+  }
+}
