@@ -25,6 +25,7 @@ import io.nekohasekai.sfa.ktx.setSimpleItems
 import io.nekohasekai.sfa.ktx.text
 import io.nekohasekai.sfa.ui.MainActivity
 import io.nekohasekai.sfa.ui.profileoverride.ProfileOverrideActivity
+import io.nekohasekai.sfa.vendor.Vendor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -59,6 +60,9 @@ class SettingsFragment : Fragment() {
                 activity.getExternalFilesDir(null)?.deleteRecursively()
                 reloadSettings()
             }
+        }
+        binding.checkUpdateButton.setOnClickListener {
+            Vendor.checkUpdate(activity, byUser = true)
         }
         binding.openPrivacyPolicyButton.setOnClickListener {
             activity.launchCustomTab("https://github.com/PavelLizunov/VPNRouter")

@@ -62,6 +62,13 @@
                     android:orientation="horizontal">
 
                     <Button
+                        android:id="@+id/checkUpdateButton"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/check_update" />
+
+                    <Button
                         android:id="@+id/openPrivacyPolicyButton"
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="wrap_content"
