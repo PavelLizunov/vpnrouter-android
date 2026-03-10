@@ -52,12 +52,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     disablePager()
                     binding.fab.setIconResource(R.drawable.ic_play_arrow_24)
                     binding.fab.text = getString(R.string.action_start)
-                    binding.fab.show()
+                    binding.fab.isVisible = true
                     binding.fab.isEnabled = true
                 }
 
                 Status.Starting -> {
-                    binding.fab.hide()
+                    binding.fab.isVisible = false
                 }
 
                 Status.Started -> {
@@ -65,13 +65,13 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     enablePager()
                     binding.fab.setIconResource(R.drawable.ic_stop_24)
                     binding.fab.text = getString(R.string.stop)
-                    binding.fab.show()
+                    binding.fab.isVisible = true
                     binding.fab.isEnabled = true
                 }
 
                 Status.Stopping -> {
                     disablePager()
-                    binding.fab.hide()
+                    binding.fab.isVisible = false
                 }
 
                 else -> {}

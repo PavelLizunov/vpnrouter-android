@@ -49,12 +49,12 @@ class LogFragment : Fragment(), CommandClient.Handler {
                 Status.Stopped -> {
                     binding.fab.setIconResource(R.drawable.ic_play_arrow_24)
                     binding.fab.text = getString(R.string.action_start)
-                    binding.fab.show()
+                    binding.fab.isVisible = true
                     binding.statusText.setText(R.string.status_default)
                 }
 
                 Status.Starting -> {
-                    binding.fab.hide()
+                    binding.fab.isVisible = false
                     binding.statusText.setText(R.string.status_starting)
                 }
 
@@ -62,13 +62,13 @@ class LogFragment : Fragment(), CommandClient.Handler {
                     commandClient.connect()
                     binding.fab.setIconResource(R.drawable.ic_stop_24)
                     binding.fab.text = getString(R.string.stop)
-                    binding.fab.show()
+                    binding.fab.isVisible = true
                     binding.fab.isEnabled = true
                     binding.statusText.setText(R.string.status_started)
                 }
 
                 Status.Stopping -> {
-                    binding.fab.hide()
+                    binding.fab.isVisible = false
                     binding.statusText.setText(R.string.status_stopping)
                 }
 
