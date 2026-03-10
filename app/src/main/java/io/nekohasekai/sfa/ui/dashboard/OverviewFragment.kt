@@ -1,14 +1,10 @@
 package io.nekohasekai.sfa.ui.dashboard
 
 import android.annotation.SuppressLint
-import android.app.AppOpsManager
-import android.app.usage.UsageStatsManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.os.Process
-import android.provider.Settings as AndroidSettings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,7 +15,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.divider.MaterialDividerItemDecoration
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.StatusMessage
@@ -118,32 +113,6 @@ class OverviewFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         loadProtectedApps()
-        promptUsageStatsIfNeeded()
-    }
-
-    private fun hasUsageStatsPermission(): Boolean {
-        val ctx = context ?: return false
-        val appOps = ctx.getSystemService(AppOpsManager::class.java)
-        val mode = appOps.unsafeCheckOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            Process.myUid(),
-            ctx.packageName
-        )
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
-
-    private fun promptUsageStatsIfNeeded() {
-        if (Settings.usageStatsAsked) return
-        if (hasUsageStatsPermission()) return
-        Settings.usageStatsAsked = true
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.usage_stats_title)
-            .setMessage(R.string.usage_stats_message)
-            .setPositiveButton(R.string.allow) { _, _ ->
-                startActivity(Intent(AndroidSettings.ACTION_USAGE_ACCESS_SETTINGS))
-            }
-            .setNegativeButton(R.string.no_thanks, null)
-            .show()
     }
 
     override fun onDestroyView() {
@@ -165,29 +134,20 @@ class OverviewFragment : Fragment() {
         lifecycleScope.launch(Dispatchers.IO) {
             val pm = ctx.packageManager
             val appList = Settings.perAppProxyList
-            // Collect installed packages
-            val installed = mutableListOf<String>()
+            data class AppEntry(val label: String, val icon: Drawable)
+            val entries = mutableListOf<AppEntry>()
             for (packageName in appList) {
                 try {
-                    pm.getApplicationIcon(packageName)
-                    installed.add(packageName)
+                    val info = pm.getApplicationInfo(packageName, 0)
+                    val label = pm.getApplicationLabel(info).toString()
+                    val icon = pm.getApplicationIcon(info)
+                    entries.add(AppEntry(label, icon))
                 } catch (_: PackageManager.NameNotFoundException) {
                     // Not installed, skip
                 }
             }
-            // Sort by usage if permission granted
-            if (hasUsageStatsPermission()) {
-                val usm = ctx.getSystemService(UsageStatsManager::class.java)
-                val end = System.currentTimeMillis()
-                val start = end - 7 * 24 * 60 * 60 * 1000L // 7 days
-                val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_WEEKLY, start, end)
-                val usageMap = mutableMapOf<String, Long>()
-                for (s in stats) {
-                    usageMap[s.packageName] = (usageMap[s.packageName] ?: 0) + s.totalTimeInForeground
-                }
-                installed.sortByDescending { usageMap[it] ?: 0L }
-            }
-            val icons = installed.map { pm.getApplicationIcon(it) }
+            entries.sortBy { it.label.lowercase() }
+            val icons = entries.map { it.icon }
             withContext(Dispatchers.Main) {
                 binding.protectedAppsTitle.text =
                     getString(R.string.protected_apps_title, icons.size)

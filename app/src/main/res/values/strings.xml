@@ -195,7 +195,5 @@
     <string name="getting_started_message">Press the play button to connect. VPN routes selected apps through a secure tunnel.</string>
     <string name="manage_apps">Manage Apps</string>
     <string name="protected_apps_title">Protected Apps (%d)</string>
-    <string name="usage_stats_title">Sort apps by usage</string>
-    <string name="usage_stats_message">Allow access to app usage data to sort Protected Apps by how often you use them. You\'ll be taken to system settings.</string>
-    <string name="allow">Allow</string>
+
 </resources>
