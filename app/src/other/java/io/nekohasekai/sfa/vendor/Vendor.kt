@@ -1,6 +1,7 @@
 package io.nekohasekai.sfa.vendor
 
 import android.app.Activity
+import android.app.ProgressDialog
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
@@ -97,24 +98,54 @@ object Vendor : VendorInterface {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun downloadAndInstall(activity: Activity, apkUrl: String, fileName: String) {
         @Suppress("OPT_IN_USAGE")
         GlobalScope.launch(Dispatchers.IO) {
+            var progressDialog: ProgressDialog? = null
             try {
-                val cacheDir = File(activity.cacheDir, "updates").also { it.mkdirs() }
-                val apkFile = File(cacheDir, fileName)
-
-                // Download APK
-                val connection = URL(apkUrl).openConnection() as HttpURLConnection
-                connection.instanceFollowRedirects = true
-                connection.connect()
-                connection.inputStream.use { input ->
-                    apkFile.outputStream().use { output ->
-                        input.copyTo(output)
+                withContext(Dispatchers.Main) {
+                    progressDialog = ProgressDialog(activity).apply {
+                        setTitle("Downloading update")
+                        setMessage(fileName)
+                        setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+                        max = 100
+                        isIndeterminate = false
+                        setCancelable(false)
+                        show()
                     }
                 }
 
-                // Install via FileProvider
+                val cacheDir = File(activity.cacheDir, "updates").also { it.mkdirs() }
+                val apkFile = File(cacheDir, fileName)
+
+                val connection = URL(apkUrl).openConnection() as HttpURLConnection
+                connection.instanceFollowRedirects = true
+                connection.connect()
+                val totalSize = connection.contentLength
+                var downloaded = 0L
+
+                connection.inputStream.use { input ->
+                    apkFile.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var bytesRead: Int
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            output.write(buffer, 0, bytesRead)
+                            downloaded += bytesRead
+                            if (totalSize > 0) {
+                                val percent = (downloaded * 100 / totalSize).toInt()
+                                withContext(Dispatchers.Main) {
+                                    progressDialog?.progress = percent
+                                }
+                            }
+                        }
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    progressDialog?.dismiss()
+                }
+
                 val uri = FileProvider.getUriForFile(
                     activity,
                     "${activity.packageName}.cache",
@@ -132,6 +163,7 @@ object Vendor : VendorInterface {
             } catch (e: Exception) {
                 Log.e(TAG, "Download failed", e)
                 withContext(Dispatchers.Main) {
+                    progressDialog?.dismiss()
                     MaterialAlertDialogBuilder(activity)
                         .setTitle("Download failed")
                         .setMessage(e.message)
