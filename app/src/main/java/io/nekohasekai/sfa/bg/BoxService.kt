@@ -40,6 +40,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 
 class BoxService(
@@ -116,11 +118,12 @@ class BoxService(
                 return
             }
 
-            val content = File(profile.typed.path).readText()
-            if (content.isBlank()) {
+            val rawContent = File(profile.typed.path).readText()
+            if (rawContent.isBlank()) {
                 stopAndAlert(Alert.EmptyConfiguration)
                 return
             }
+            val content = injectDirectRoutes(rawContent)
 
             lastProfileName = profile.name
             withContext(Dispatchers.Main) {
@@ -162,6 +165,41 @@ class BoxService(
         } catch (e: Exception) {
             stopAndAlert(Alert.StartService, e.message)
             return
+        }
+    }
+
+    private fun injectDirectRoutes(json: String): String {
+        return try {
+            val config = JSONObject(json)
+            val route = config.optJSONObject("route") ?: return json
+            val rules = route.optJSONArray("rules") ?: return json
+
+            // Captcha/auth domains that should bypass proxy
+            val directDomains = JSONArray().apply {
+                put("hcaptcha.com")
+                put("recaptcha.net")
+                put("challenges.cloudflare.com")
+            }
+            val rule = JSONObject().apply {
+                put("domain_suffix", directDomains)
+                put("action", "route")
+                put("outbound", "direct")
+            }
+
+            // Insert after hijack-dns rule (index 1), before other rules
+            val insertIndex = minOf(1, rules.length())
+            val newRules = JSONArray()
+            for (i in 0 until rules.length()) {
+                if (i == insertIndex) newRules.put(rule)
+                newRules.put(rules.get(i))
+            }
+            if (insertIndex >= rules.length()) newRules.put(rule)
+
+            route.put("rules", newRules)
+            config.put("route", route)
+            config.toString()
+        } catch (_: Exception) {
+            json // Return original on any error
         }
     }
 
