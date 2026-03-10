@@ -50,6 +50,8 @@ class BoxService(
 
     companion object {
 
+        const val LOCAL_PROXY_PORT = 19876
+
         fun start() {
             val intent = runBlocking {
                 withContext(Dispatchers.IO) {
@@ -197,9 +199,21 @@ class BoxService(
 
             route.put("rules", newRules)
             config.put("route", route)
+
+            // 2. Inject local HTTP proxy for update checks through VPN
+            val inbounds = config.optJSONArray("inbounds") ?: JSONArray()
+            val mixedInbound = JSONObject().apply {
+                put("type", "mixed")
+                put("tag", "update-proxy")
+                put("listen", "127.0.0.1")
+                put("listen_port", LOCAL_PROXY_PORT)
+            }
+            inbounds.put(mixedInbound)
+            config.put("inbounds", inbounds)
+
             config.toString()
         } catch (_: Exception) {
-            json // Return original on any error
+            json
         }
     }
 

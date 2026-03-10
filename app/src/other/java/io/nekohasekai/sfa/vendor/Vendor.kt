@@ -14,9 +14,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import io.nekohasekai.sfa.bg.BoxService
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
+import java.net.InetSocketAddress
+import java.net.Proxy
 import java.net.URL
 
 object Vendor : VendorInterface {
@@ -43,8 +46,13 @@ object Vendor : VendorInterface {
                 val release = try {
                     fetchReleaseFromApi()
                 } catch (apiError: Exception) {
-                    Log.w(TAG, "API check failed, trying fallback", apiError)
-                    fetchReleaseFromRedirect()
+                    Log.w(TAG, "API check failed, trying redirect", apiError)
+                    try {
+                        fetchReleaseFromRedirect()
+                    } catch (redirectError: Exception) {
+                        Log.w(TAG, "Redirect failed, trying through VPN proxy", redirectError)
+                        fetchReleaseFromApi(useLocalProxy = true)
+                    }
                 }
 
                 val currentVersion = BuildConfig.VERSION_NAME
@@ -86,8 +94,14 @@ object Vendor : VendorInterface {
         }
     }
 
-    private fun fetchReleaseFromApi(): ReleaseInfo {
-        val connection = URL(API_URL).openConnection() as HttpURLConnection
+    private fun fetchReleaseFromApi(useLocalProxy: Boolean = false): ReleaseInfo {
+        val url = URL(API_URL)
+        val connection = if (useLocalProxy) {
+            val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress("127.0.0.1", BoxService.LOCAL_PROXY_PORT))
+            url.openConnection(proxy) as HttpURLConnection
+        } else {
+            url.openConnection() as HttpURLConnection
+        }
         connection.instanceFollowRedirects = true
         connection.setRequestProperty("Accept", "application/vnd.github+json")
         connection.connectTimeout = 10000
@@ -172,9 +186,20 @@ object Vendor : VendorInterface {
                 val cacheDir = File(activity.cacheDir, "updates").also { it.mkdirs() }
                 val apkFile = File(cacheDir, fileName)
 
-                val connection = URL(apkUrl).openConnection() as HttpURLConnection
-                connection.instanceFollowRedirects = true
-                connection.connect()
+                val apkUrlObj = URL(apkUrl)
+                val connection = try {
+                    val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress("127.0.0.1", BoxService.LOCAL_PROXY_PORT))
+                    (apkUrlObj.openConnection(proxy) as HttpURLConnection).also {
+                        it.instanceFollowRedirects = true
+                        it.connectTimeout = 5000
+                        it.connect()
+                    }
+                } catch (_: Exception) {
+                    (apkUrlObj.openConnection() as HttpURLConnection).also {
+                        it.instanceFollowRedirects = true
+                        it.connect()
+                    }
+                }
                 val totalSize = connection.contentLength
                 var downloaded = 0L
 
