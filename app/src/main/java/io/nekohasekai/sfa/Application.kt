@@ -101,7 +101,8 @@ class Application : Application() {
                 "com.openai.chatgpt",
                 "com.google.android.apps.bard",
                 "com.microsoft.copilot",
-                // Play Store + Google Play Services (auth, push, updates)
+                // System components (WebView for in-app login, Play Store, GMS)
+                "com.google.android.webview",
                 "com.android.vending",
                 "com.google.android.gms",
             )
